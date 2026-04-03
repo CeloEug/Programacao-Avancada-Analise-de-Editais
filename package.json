@@ -1,0 +1,19 @@
+{
+  "name": "programacao-avancada-analise-de-editais",
+  "version": "1.0.0",
+  "description": "API Express",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
