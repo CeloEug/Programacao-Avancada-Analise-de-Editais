@@ -5,6 +5,7 @@ import type { PipelineInput } from "../services/pipeline.js";
 export const pipelineRouter = Router();
 
 const FIELDS: (keyof PipelineInput)[] = [
+  "editalText",
   "titulo",
   "descricao",
   "objetivos",
@@ -30,7 +31,7 @@ pipelineRouter.post("/pipeline", async (req, res): Promise<void> => {
   if (!input) {
     res.status(400).json({
       error:
-        "Invalid body. Required JSON string fields: titulo, descricao, objetivos, metodologia, orcamento, equipe.",
+        "Invalid body. Required JSON string fields: editalText, titulo, descricao, objetivos, metodologia, orcamento, equipe.",
     });
     return;
   }

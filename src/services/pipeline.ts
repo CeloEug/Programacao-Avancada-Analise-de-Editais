@@ -1,6 +1,7 @@
 import { callLLM } from "../llm/client.js";
 
 export type PipelineInput = {
+  editalText: string;
   titulo: string;
   descricao: string;
   objetivos: string;
@@ -20,18 +21,37 @@ function stripJsonFence(raw: string): string {
 }
 
 export async function runPipeline(input: PipelineInput): Promise<PipelineOutput> {
-  const prompt = `Com base nos dados abaixo, produza um resumo executivo do projeto e um checklist de conformidade para editais públicos.
+  const prompt = `Based on the following edital:
 
-Dados:
-- Título: ${input.titulo}
-- Descrição: ${input.descricao}
-- Objetivos: ${input.objetivos}
-- Metodologia: ${input.metodologia}
-- Orçamento: ${input.orcamento}
-- Equipe: ${input.equipe}
+${input.editalText}
 
-Responda APENAS com um JSON válido (sem markdown), no formato exato:
-{"projeto":"texto em um único parágrafo ou texto corrido","checklist":{"item_chave":"valor ou status string"}}`;
+And the project data:
+
+- Title: ${input.titulo}
+- Description: ${input.descricao}
+- Objectives: ${input.objetivos}
+- Methodology: ${input.metodologia}
+- Budget: ${input.orcamento}
+- Team: ${input.equipe}
+
+Use the edital content as the primary reference. Align the generated project with the edital's requirements, constraints, and evaluation criteria.
+
+Generate a COMPLETE project with:
+
+* Introdução
+* Justificativa
+* Objetivos
+* Metodologia
+* Cronograma
+* Orçamento
+
+Then generate a compliance checklist based on the edital.
+
+Return ONLY valid JSON (no markdown):
+{
+"projeto": "...",
+"checklist": { ... }
+}`;
 
   const raw = await callLLM(prompt);
   const trimmed = stripJsonFence(raw);
