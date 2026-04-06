@@ -4,7 +4,7 @@ const { mockCreate } = vi.hoisted(() => ({ mockCreate: vi.fn() }));
 
 vi.mock('openai', () => {
   class MockOpenAI {
-    chat = { completions: { create: mockCreate } };
+    responses = { create: mockCreate };
   }
   class APIError extends Error {
     status?: number;
@@ -46,24 +46,18 @@ describe('callLLM', () => {
   });
 
   it('returns trimmed response on success', async () => {
-    mockCreate.mockResolvedValueOnce({
-      choices: [{ message: { content: '  hello world  ' } }],
-    });
+    mockCreate.mockResolvedValueOnce({ output_text: '  hello world  ' });
     const result = await callLLM('some prompt');
     expect(result).toBe('hello world');
   });
 
   it('throws when response content is null', async () => {
-    mockCreate.mockResolvedValueOnce({
-      choices: [{ message: { content: null } }],
-    });
+    mockCreate.mockResolvedValueOnce({ output_text: null });
     await expect(callLLM('prompt')).rejects.toThrow('OpenAI returned an empty response');
   });
 
   it('throws when response content is empty string', async () => {
-    mockCreate.mockResolvedValueOnce({
-      choices: [{ message: { content: '   ' } }],
-    });
+    mockCreate.mockResolvedValueOnce({ output_text: '   ' });
     await expect(callLLM('prompt')).rejects.toThrow('OpenAI returned an empty response');
   });
 

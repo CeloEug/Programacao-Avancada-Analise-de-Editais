@@ -3,7 +3,7 @@ import OpenAI, { APIError } from "openai";
 
 const MODEL = "gpt-4.1";
 const TEMPERATURE = 0.3;
-const MAX_TOKENS = 1000;
+const MAX_OUTPUT_TOKENS = 1000;
 
 function getClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -23,14 +23,14 @@ export async function callLLM(prompt: string): Promise<string> {
   const client = getClient();
 
   try {
-    const response = await client.chat.completions.create({
+    const response = await client.responses.create({
       model: MODEL,
-      messages: [{ role: "user", content: prompt }],
+      input: prompt,
       temperature: TEMPERATURE,
-      max_tokens: MAX_TOKENS,
+      max_output_tokens: MAX_OUTPUT_TOKENS,
     });
 
-    const text = response.choices[0]?.message?.content?.trim();
+    const text = response.output_text?.trim();
     if (!text) {
       throw new Error("OpenAI returned an empty response.");
     }
