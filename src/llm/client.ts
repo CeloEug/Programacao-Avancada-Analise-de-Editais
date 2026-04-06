@@ -11,7 +11,7 @@ function getClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey?.trim()) {
     throw new Error(
-      "OPENAI_API_KEY is missing or empty. Set it in your environment or .env file."
+      "OPENAI_API_KEY is missing or empty. Set it in your environment or .env file.",
     );
   }
   return new OpenAI({ apiKey });
@@ -27,15 +27,31 @@ export type StructuredLLMResult<T> =
       refusal: string;
     };
 
+/**
+ * Calls the OpenAI Responses API with structured output validation.
+ *
+ * Separates trusted instructions from untrusted user content to mitigate
+ * prompt injection: `systemPrompt` is sent via the high-authority
+ * `instructions` parameter, while `userContent` is sent via `input`.
+ *
+ * @param systemPrompt - Developer-level instructions (Identity, Instructions,
+ *   Examples). Passed to the `instructions` API parameter, which takes
+ *   priority over user input.
+ * @param userContent - User-supplied data (e.g. edital text, project fields),
+ *   typically wrapped in XML tags. Passed to the `input` API parameter.
+ * @param schema - Zod schema describing the expected response shape.
+ * @param schemaName - Identifier for the schema used by the SDK's structured
+ *   output formatter.
+ * @returns `{ parsed, refusal: null }` on success, or
+ *   `{ parsed: null, refusal }` when the model explicitly refuses.
+ * @throws When the API call fails or returns an empty structured response.
+ */
 export async function callStructuredLLM<Schema extends ZodType>(
-  prompt: string,
+  systemPrompt: string,
+  userContent: string,
   schema: Schema,
-  schemaName: string
+  schemaName: string,
 ): Promise<StructuredLLMResult<zInfer<Schema>>> {
-  if (typeof prompt !== "string") {
-    throw new Error("callStructuredLLM expects a string prompt.");
-  }
-
   if (typeof schemaName !== "string" || !schemaName.trim()) {
     throw new Error("callStructuredLLM expects a non-empty schema name.");
   }
@@ -45,7 +61,8 @@ export async function callStructuredLLM<Schema extends ZodType>(
   try {
     const response = await client.responses.parse({
       model: MODEL,
-      input: prompt,
+      instructions: systemPrompt,
+      input: userContent,
       temperature: TEMPERATURE,
       max_output_tokens: MAX_OUTPUT_TOKENS,
       text: {
@@ -89,7 +106,7 @@ export async function callStructuredLLM<Schema extends ZodType>(
     if (error instanceof APIError) {
       const detail = error.message || "unknown error";
       throw new Error(
-        `OpenAI request failed (${error.status ?? "no status"}): ${detail}`
+        `OpenAI request failed (${error.status ?? "no status"}): ${detail}`,
       );
     }
 

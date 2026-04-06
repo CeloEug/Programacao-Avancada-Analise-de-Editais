@@ -32,6 +32,7 @@ describe('extractEdital', () => {
     });
     await extractEdital('texto do edital');
     expect(callStructuredLLM).toHaveBeenCalledWith(
+      expect.stringContaining('Extract the following'),
       expect.stringContaining('texto do edital'),
       expect.anything(),
       'extraction_output'

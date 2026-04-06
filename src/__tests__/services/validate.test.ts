@@ -32,7 +32,8 @@ describe('validateProject', () => {
     });
     await validateProject('req', 'proj');
     expect(callStructuredLLM).toHaveBeenCalledWith(
-      expect.stringContaining('Requisitos:'),
+      expect.stringContaining('Cross-check'),
+      expect.stringContaining('req'),
       expect.anything(),
       'validation_output'
     );

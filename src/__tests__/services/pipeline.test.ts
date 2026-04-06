@@ -44,6 +44,7 @@ describe('runPipeline', () => {
     });
     await runPipeline(baseInput);
     expect(callStructuredLLM).toHaveBeenCalledWith(
+      expect.anything(),
       expect.stringContaining(baseInput.editalText),
       expect.anything(),
       'pipeline_output'

@@ -40,21 +40,16 @@ describe('callStructuredLLM', () => {
 
   it('throws when OPENAI_API_KEY is missing', async () => {
     delete process.env.OPENAI_API_KEY;
-    await expect(callStructuredLLM('test', TestSchema, 'test_schema')).rejects.toThrow('OPENAI_API_KEY is missing or empty');
+    await expect(callStructuredLLM('system', 'user', TestSchema, 'test_schema')).rejects.toThrow('OPENAI_API_KEY is missing or empty');
   });
 
   it('throws when OPENAI_API_KEY is empty string', async () => {
     process.env.OPENAI_API_KEY = '   ';
-    await expect(callStructuredLLM('test', TestSchema, 'test_schema')).rejects.toThrow('OPENAI_API_KEY is missing or empty');
-  });
-
-  it('throws when prompt is not a string', async () => {
-    // @ts-expect-error intentional wrong type
-    await expect(callStructuredLLM(42, TestSchema, 'test_schema')).rejects.toThrow('callStructuredLLM expects a string prompt');
+    await expect(callStructuredLLM('system', 'user', TestSchema, 'test_schema')).rejects.toThrow('OPENAI_API_KEY is missing or empty');
   });
 
   it('throws when schema name is empty', async () => {
-    await expect(callStructuredLLM('test', TestSchema, '   ')).rejects.toThrow('callStructuredLLM expects a non-empty schema name');
+    await expect(callStructuredLLM('system', 'user', TestSchema, '   ')).rejects.toThrow('callStructuredLLM expects a non-empty schema name');
   });
 
   it('returns parsed response on success', async () => {
@@ -62,12 +57,13 @@ describe('callStructuredLLM', () => {
       output_parsed: { value: 'hello world' },
       output: [],
     });
-    const result = await callStructuredLLM('some prompt', TestSchema, 'test_schema');
+    const result = await callStructuredLLM('system instructions', 'user content', TestSchema, 'test_schema');
     expect(result).toEqual({ parsed: { value: 'hello world' }, refusal: null });
     expect(mockParse).toHaveBeenCalledWith(
       expect.objectContaining({
         model: 'gpt-5.4',
-        input: 'some prompt',
+        instructions: 'system instructions',
+        input: 'user content',
         text: expect.objectContaining({
           format: expect.objectContaining({ type: 'json_schema' }),
         }),
@@ -85,7 +81,7 @@ describe('callStructuredLLM', () => {
         },
       ],
     });
-    const result = await callStructuredLLM('prompt', TestSchema, 'test_schema');
+    const result = await callStructuredLLM('system', 'prompt', TestSchema, 'test_schema');
     expect(result).toEqual({ parsed: null, refusal: 'I cannot help with that.' });
   });
 
@@ -99,25 +95,25 @@ describe('callStructuredLLM', () => {
         },
       ],
     });
-    const result = await callStructuredLLM('prompt', TestSchema, 'test_schema');
+    const result = await callStructuredLLM('system', 'prompt', TestSchema, 'test_schema');
     expect(result).toEqual({ parsed: { value: 'fallback' }, refusal: null });
   });
 
   it('throws when response has neither parsed content nor refusal', async () => {
     mockParse.mockResolvedValueOnce({ output_parsed: null, output: [] });
-    await expect(callStructuredLLM('prompt', TestSchema, 'test_schema')).rejects.toThrow('OpenAI returned an empty structured response');
+    await expect(callStructuredLLM('system', 'prompt', TestSchema, 'test_schema')).rejects.toThrow('OpenAI returned an empty structured response');
   });
 
   it('wraps APIError with status code', async () => {
     const { APIError } = await import('openai');
     const apiErr = new (APIError as new (s: number, m: string) => Error)(401, 'Unauthorized');
     mockParse.mockRejectedValueOnce(apiErr);
-    await expect(callStructuredLLM('prompt', TestSchema, 'test_schema')).rejects.toThrow('OpenAI request failed (401)');
+    await expect(callStructuredLLM('system', 'prompt', TestSchema, 'test_schema')).rejects.toThrow('OpenAI request failed (401)');
   });
 
   it('re-throws plain Error unchanged', async () => {
     const err = new Error('network timeout');
     mockParse.mockRejectedValueOnce(err);
-    await expect(callStructuredLLM('prompt', TestSchema, 'test_schema')).rejects.toThrow('network timeout');
+    await expect(callStructuredLLM('system', 'prompt', TestSchema, 'test_schema')).rejects.toThrow('network timeout');
   });
 });
