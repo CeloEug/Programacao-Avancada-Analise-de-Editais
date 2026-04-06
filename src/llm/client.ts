@@ -68,6 +68,7 @@ export async function callStructuredLLM<Schema extends ZodType>(
       text: {
         format: zodTextFormat(schema, schemaName),
       },
+      store: false,
     });
 
     if (response.output_parsed) {
