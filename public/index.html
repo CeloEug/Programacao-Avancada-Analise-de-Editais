@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gerador de Propostas para Editais</title>
+    <style>
+      :root {
+        color-scheme: dark only;
+        --bg: #070b14;
+        --surface: #0f1524;
+        --surface-2: #111b2f;
+        --line: #23304c;
+        --line-soft: #1e2638;
+        --text: #e9eefc;
+        --text-soft: #99a8c7;
+        --brand: #4c7dff;
+        --brand-2: #355fd1;
+        --ok: #35c886;
+        --error: #ff6f86;
+        --radius: 12px;
+        --shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+        font-family: "Segoe UI", Inter, Roboto, Arial, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(1000px 420px at 15% -25%, #183261 0%, transparent 72%),
+          radial-gradient(900px 380px at 92% -20%, #221f50 0%, transparent 70%),
+          var(--bg);
+        color: var(--text);
+      }
+
+      .container {
+        width: min(980px, 92vw);
+        margin: 2.2rem auto 3rem;
+      }
+
+      .header {
+        margin-bottom: 1rem;
+      }
+
+      .badge {
+        display: inline-block;
+        margin-bottom: 0.75rem;
+        padding: 0.33rem 0.62rem;
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        border-radius: 999px;
+        background: #16294c;
+        color: #c5d7ff;
+        border: 1px solid #2b487f;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+
+      p {
+        margin: 0.45rem 0 0;
+        color: var(--text-soft);
+      }
+
+      .layout {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .panel {
+        background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .form-panel {
+        padding: 1.2rem;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.85rem;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .panel-title {
+        margin: 0;
+        font-size: 1.02rem;
+      }
+
+      .panel-subtitle {
+        margin: 0.2rem 0 0;
+        color: var(--text-soft);
+        font-size: 0.82rem;
+      }
+
+      form {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .grid-2 {
+        display: grid;
+        gap: 1rem;
+      }
+
+      @media (min-width: 720px) {
+        .grid-2 {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .field {
+        display: grid;
+        gap: 0.42rem;
+        background: rgba(9, 14, 26, 0.42);
+        border: 1px solid #1a2540;
+        border-radius: 10px;
+        padding: 0.8rem;
+      }
+
+      label {
+        font-size: 0.86rem;
+        font-weight: 550;
+        color: #d7e0f9;
+        letter-spacing: 0.01em;
+      }
+
+      input,
+      textarea,
+      button {
+        font: inherit;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        border: 1px solid #2c3960;
+        border-radius: 10px;
+        background: #080e1b;
+        color: var(--text);
+        padding: 0.7rem 0.8rem;
+        box-sizing: border-box;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease;
+      }
+
+      input::placeholder,
+      textarea::placeholder {
+        color: #61708f;
+      }
+
+      input:focus-visible,
+      textarea:focus-visible {
+        outline: none;
+        border-color: var(--brand);
+        box-shadow: 0 0 0 4px rgba(76, 125, 255, 0.16);
+      }
+
+      .is-invalid input,
+      .is-invalid textarea {
+        border-color: #d05a6d;
+      }
+
+      .is-valid input,
+      .is-valid textarea {
+        border-color: #2f9469;
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      .hint {
+        color: #8e9fbd;
+        font-size: 0.78rem;
+      }
+
+      .error {
+        color: var(--error);
+        font-size: 0.78rem;
+        min-height: 0.95rem;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.15rem;
+      }
+
+      .action-left {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .primary-btn {
+        border: 1px solid transparent;
+        background: linear-gradient(180deg, var(--brand) 0%, var(--brand-2) 100%);
+        color: #fff;
+        border-radius: 10px;
+        padding: 0.74rem 1.18rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.12s ease, filter 0.18s ease;
+      }
+
+      .primary-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        filter: brightness(1.07);
+      }
+
+      .primary-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      #feedback {
+        margin-top: 0.45rem;
+        min-height: 1rem;
+        color: var(--error);
+        font-size: 0.82rem;
+      }
+
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <span class="badge">Editais</span>
+        <h1>Dados do Projeto</h1>
+        <p>Preencha as informações essenciais para gerar um rascunho alinhado ao edital.</p>
+      </header>
+
+      <section class="layout">
+        <div class="panel form-panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">Formulário de proposta</h2>
+              <p class="panel-subtitle">Campos obrigatórios para geração automática do rascunho.</p>
+            </div>
+          </div>
+
+          <form id="pipeline-form" novalidate>
+            <div class="field" data-field="titulo">
+              <label for="titulo">Título</label>
+              <input id="titulo" name="titulo" type="text" placeholder="Ex.: Plataforma de apoio à escrita de editais" />
+              <span class="error" data-error-for="titulo"></span>
+            </div>
+
+            <div class="grid-2">
+              <div class="field" data-field="orcamento">
+                <label for="orcamento">Orçamento</label>
+                <input id="orcamento" name="orcamento" type="text" placeholder="Ex.: R$ 50.000,00" />
+                <span class="error" data-error-for="orcamento"></span>
+              </div>
+
+              <div class="field" data-field="equipe">
+                <label for="equipe">Equipe</label>
+                <input id="equipe" name="equipe" type="text" placeholder="Ex.: 2 pesquisadores + 1 dev" />
+                <span class="error" data-error-for="equipe"></span>
+              </div>
+            </div>
+
+            <div class="field" data-field="descricao">
+              <label for="descricao">Descrição</label>
+              <textarea id="descricao" name="descricao" placeholder="Resumo do projeto e problema a resolver."></textarea>
+              <span class="error" data-error-for="descricao"></span>
+            </div>
+
+            <div class="field" data-field="objetivos">
+              <label for="objetivos">Objetivos</label>
+              <textarea id="objetivos" name="objetivos" placeholder="Objetivo geral e objetivos específicos."></textarea>
+              <span class="error" data-error-for="objetivos"></span>
+            </div>
+
+            <div class="field" data-field="metodologia">
+              <label for="metodologia">Metodologia</label>
+              <textarea id="metodologia" name="metodologia" placeholder="Como o projeto será executado (etapas, métodos, ferramentas)."></textarea>
+              <span class="error" data-error-for="metodologia"></span>
+            </div>
+
+            <div class="field" data-field="editalText">
+              <label for="editalText">Texto do edital</label>
+              <textarea id="editalText" name="editalText" placeholder="Cole aqui o texto extraído do edital."></textarea>
+              <span class="hint">Necessário para alinhar o rascunho ao edital. Se extraiu de um PDF, cole o texto completo aqui.</span>
+              <span class="error" data-error-for="editalText"></span>
+            </div>
+
+            <div class="actions">
+              <div class="action-left">
+                <button class="primary-btn" id="submit-btn" type="submit">Gerar proposta</button>
+              </div>
+            </div>
+            <div id="feedback" aria-live="polite"></div>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
