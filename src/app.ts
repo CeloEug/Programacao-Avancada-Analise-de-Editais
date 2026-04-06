@@ -30,7 +30,31 @@ app.use(
   })
 );
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);
   console.log(`Swagger UI: http://localhost:${PORT}/docs`);
 });
+
+let isShuttingDown = false;
+
+const shutdown = (signal: NodeJS.Signals) => {
+  if (isShuttingDown) {
+    return;
+  }
+
+  isShuttingDown = true;
+  console.log(`${signal} received. Shutting down server...`);
+
+  server.close((error) => {
+    if (error) {
+      console.error("Error while closing server:", error);
+      process.exit(1);
+    }
+
+    console.log("Server closed.");
+    process.exit(0);
+  });
+};
+
+process.once("SIGINT", () => shutdown("SIGINT"));
+process.once("SIGTERM", () => shutdown("SIGTERM"));
