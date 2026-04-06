@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { callLLM } from "../llm/client.js";
+import { callStructuredLLM } from "../llm/client.js";
 
 const ExtractionOutputSchema = z.object({
   prazo:     z.string().catch(""),
@@ -10,31 +10,22 @@ const ExtractionOutputSchema = z.object({
 
 export type ExtractionOutput = z.infer<typeof ExtractionOutputSchema>;
 
-function stripJsonFence(raw: string): string {
-  const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-  return match ? match[1].trim() : raw.trim();
-}
-
 export async function extractEdital(editalText: string): Promise<ExtractionOutput> {
-  const prompt = `Extraia prazo, critérios, formato e temas deste edital e retorne em JSON.
-
-Retorne APENAS JSON válido (sem markdown), no formato:
-{
-  "prazo": "",
-  "criterios": [],
-  "formato": "",
-  "temas": []
-}
+  const prompt = `Extraia prazo, critérios, formato e temas do edital abaixo.
+Se alguma informação não estiver disponível com segurança, retorne string vazia ou array vazio no campo correspondente.
 
 Edital:
 ${editalText}`;
 
-  const raw = await callLLM(prompt);
-  const trimmed = stripJsonFence(raw);
+  const result = await callStructuredLLM(
+    prompt,
+    ExtractionOutputSchema,
+    "extraction_output"
+  );
 
-  try {
-    return ExtractionOutputSchema.parse(JSON.parse(trimmed));
-  } catch {
-    return ExtractionOutputSchema.parse({});
+  if (result.parsed) {
+    return result.parsed;
   }
+
+  return ExtractionOutputSchema.parse({});
 }

@@ -1,7 +1,9 @@
 import "dotenv/config";
 import OpenAI, { APIError } from "openai";
+import { zodTextFormat } from "openai/helpers/zod";
+import type { infer as zInfer, ZodType } from "zod";
 
-const MODEL = "gpt-4.1";
+const MODEL = "gpt-5.4";
 const TEMPERATURE = 0.3;
 const MAX_OUTPUT_TOKENS = 1000;
 
@@ -15,26 +17,72 @@ function getClient(): OpenAI {
   return new OpenAI({ apiKey });
 }
 
-export async function callLLM(prompt: string): Promise<string> {
+export type StructuredLLMResult<T> =
+  | {
+      parsed: T;
+      refusal: null;
+    }
+  | {
+      parsed: null;
+      refusal: string;
+    };
+
+export async function callStructuredLLM<Schema extends ZodType>(
+  prompt: string,
+  schema: Schema,
+  schemaName: string
+): Promise<StructuredLLMResult<zInfer<Schema>>> {
   if (typeof prompt !== "string") {
-    throw new Error("callLLM expects a string prompt.");
+    throw new Error("callStructuredLLM expects a string prompt.");
+  }
+
+  if (typeof schemaName !== "string" || !schemaName.trim()) {
+    throw new Error("callStructuredLLM expects a non-empty schema name.");
   }
 
   const client = getClient();
 
   try {
-    const response = await client.responses.create({
+    const response = await client.responses.parse({
       model: MODEL,
       input: prompt,
       temperature: TEMPERATURE,
       max_output_tokens: MAX_OUTPUT_TOKENS,
+      text: {
+        format: zodTextFormat(schema, schemaName),
+      },
     });
 
-    const text = response.output_text?.trim();
-    if (!text) {
-      throw new Error("OpenAI returned an empty response.");
+    if (response.output_parsed) {
+      return {
+        parsed: response.output_parsed,
+        refusal: null,
+      };
     }
-    return text;
+
+    for (const output of response.output) {
+      if (output.type !== "message") {
+        continue;
+      }
+
+      for (const item of output.content) {
+        if (item.type === "refusal") {
+          return {
+            parsed: null,
+            refusal: item.refusal,
+          };
+        }
+
+        if (item.type === "output_text" && item.parsed) {
+          return {
+            parsed: item.parsed,
+            refusal: null,
+          };
+        }
+      }
+    }
+
+    throw new Error("OpenAI returned an empty structured response.");
   } catch (error: unknown) {
     console.error("OpenAI API error:", error);
 

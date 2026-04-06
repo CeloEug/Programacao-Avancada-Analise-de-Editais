@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { callLLM } from "../llm/client.js";
+import { callStructuredLLM } from "../llm/client.js";
 
 export type PipelineInput = {
   editalText: string;
@@ -17,11 +17,6 @@ const PipelineOutputSchema = z.object({
 });
 
 export type PipelineOutput = z.infer<typeof PipelineOutputSchema>;
-
-function stripJsonFence(raw: string): string {
-  const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-  return match ? match[1].trim() : raw.trim();
-}
 
 export async function runPipeline(input: PipelineInput): Promise<PipelineOutput> {
   const prompt = `Based on the following edital:
@@ -50,22 +45,17 @@ Generate a COMPLETE project with:
 
 Then generate a compliance checklist based on the edital.
 
-Return ONLY valid JSON (no markdown):
-{
-"projeto": "...",
-"checklist": { ... }
-}`;
+If the edital or project data is insufficient, return the best possible draft and leave uncertain checklist items empty or generic rather than inventing unsupported requirements.`;
 
-  const raw = await callLLM(prompt);
-  const trimmed = stripJsonFence(raw);
+  const result = await callStructuredLLM(
+    prompt,
+    PipelineOutputSchema,
+    "pipeline_output"
+  );
 
-  try {
-    const result = PipelineOutputSchema.parse(JSON.parse(trimmed));
-    return {
-      projeto: result.projeto || trimmed,
-      checklist: result.checklist,
-    };
-  } catch {
-    return { projeto: raw, checklist: {} };
+  if (result.parsed) {
+    return result.parsed;
   }
+
+  return PipelineOutputSchema.parse({});
 }

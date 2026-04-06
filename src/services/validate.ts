@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { callLLM } from "../llm/client.js";
+import { callStructuredLLM } from "../llm/client.js";
 
 const ValidationOutputSchema = z.object({
   ok:        z.array(z.coerce.string()).catch([]),
@@ -9,21 +9,12 @@ const ValidationOutputSchema = z.object({
 
 export type ValidationOutput = z.infer<typeof ValidationOutputSchema>;
 
-function stripJsonFence(raw: string): string {
-  const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-  return match ? match[1].trim() : raw.trim();
-}
-
 export async function validateProject(
   requisitos: string,
   projeto: string
 ): Promise<ValidationOutput> {
-  const prompt = `Verifique se o projeto atende aos requisitos e retorne APENAS JSON válido (sem markdown), no formato:
-{
-  "ok": [],
-  "faltando": [],
-  "sugestoes": []
-}
+  const prompt = `Verifique se o projeto atende aos requisitos.
+Se algum ponto não puder ser avaliado com segurança, prefira deixá-lo fora das listas em vez de inventar uma conclusão.
 
 Requisitos:
 ${requisitos}
@@ -31,12 +22,15 @@ ${requisitos}
 Projeto:
 ${projeto}`;
 
-  const raw = await callLLM(prompt);
-  const trimmed = stripJsonFence(raw);
+  const result = await callStructuredLLM(
+    prompt,
+    ValidationOutputSchema,
+    "validation_output"
+  );
 
-  try {
-    return ValidationOutputSchema.parse(JSON.parse(trimmed));
-  } catch {
-    return ValidationOutputSchema.parse({});
+  if (result.parsed) {
+    return result.parsed;
   }
+
+  return ValidationOutputSchema.parse({});
 }

@@ -1,63 +1,40 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { callLLM } from '../../llm/client.js';
+import { callStructuredLLM } from '../../llm/client.js';
 import { validateProject } from '../../services/validate.js';
 
-vi.mock('../../llm/client.js', () => ({ callLLM: vi.fn() }));
+vi.mock('../../llm/client.js', () => ({ callStructuredLLM: vi.fn() }));
 
 describe('validateProject', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('returns full ValidationOutput for valid JSON', async () => {
-    vi.mocked(callLLM).mockResolvedValueOnce(
-      JSON.stringify({ ok: ['r1'], faltando: ['r2'], sugestoes: ['add section'] })
-    );
+  it('returns full ValidationOutput for parsed structured output', async () => {
+    vi.mocked(callStructuredLLM).mockResolvedValueOnce({
+      parsed: { ok: ['r1'], faltando: ['r2'], sugestoes: ['add section'] },
+      refusal: null,
+    });
     const result = await validateProject('requirements', 'project text');
     expect(result).toEqual({ ok: ['r1'], faltando: ['r2'], sugestoes: ['add section'] });
   });
 
-  it('strips markdown fence before parsing', async () => {
-    vi.mocked(callLLM).mockResolvedValueOnce(
-      '```\n{"ok":["x"],"faltando":[],"sugestoes":[]}\n```'
-    );
-    const result = await validateProject('req', 'proj');
-    expect(result.ok).toEqual(['x']);
-  });
-
-  it('coerces non-array ok to []', async () => {
-    vi.mocked(callLLM).mockResolvedValueOnce(
-      JSON.stringify({ ok: 'yes', faltando: [], sugestoes: [] })
-    );
-    const result = await validateProject('req', 'proj');
-    expect(result.ok).toEqual([]);
-  });
-
-  it('coerces non-array faltando to []', async () => {
-    vi.mocked(callLLM).mockResolvedValueOnce(
-      JSON.stringify({ ok: [], faltando: null, sugestoes: [] })
-    );
-    const result = await validateProject('req', 'proj');
-    expect(result.faltando).toEqual([]);
-  });
-
-  it('coerces non-array sugestoes to []', async () => {
-    vi.mocked(callLLM).mockResolvedValueOnce(
-      JSON.stringify({ ok: [], faltando: [], sugestoes: 42 })
-    );
-    const result = await validateProject('req', 'proj');
-    expect(result.sugestoes).toEqual([]);
-  });
-
-  it('maps array items through String()', async () => {
-    vi.mocked(callLLM).mockResolvedValueOnce(
-      JSON.stringify({ ok: [1, 2], faltando: [], sugestoes: [] })
-    );
-    const result = await validateProject('req', 'proj');
-    expect(result.ok).toEqual(['1', '2']);
-  });
-
-  it('returns empty arrays on JSON parse failure', async () => {
-    vi.mocked(callLLM).mockResolvedValueOnce('broken json {');
+  it('returns empty arrays on refusal', async () => {
+    vi.mocked(callStructuredLLM).mockResolvedValueOnce({
+      parsed: null,
+      refusal: 'cannot comply',
+    });
     const result = await validateProject('req', 'proj');
     expect(result).toEqual({ ok: [], faltando: [], sugestoes: [] });
+  });
+
+  it('passes the validation schema name to the LLM client', async () => {
+    vi.mocked(callStructuredLLM).mockResolvedValueOnce({
+      parsed: { ok: [], faltando: [], sugestoes: [] },
+      refusal: null,
+    });
+    await validateProject('req', 'proj');
+    expect(callStructuredLLM).toHaveBeenCalledWith(
+      expect.stringContaining('Requisitos:'),
+      expect.anything(),
+      'validation_output'
+    );
   });
 });

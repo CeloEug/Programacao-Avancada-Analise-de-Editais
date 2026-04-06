@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { z } from 'zod';
 
-const { mockCreate } = vi.hoisted(() => ({ mockCreate: vi.fn() }));
+const { mockParse } = vi.hoisted(() => ({ mockParse: vi.fn() }));
 
 vi.mock('openai', () => {
   class MockOpenAI {
-    responses = { create: mockCreate };
+    responses = { parse: mockParse };
   }
   class APIError extends Error {
     status?: number;
@@ -16,61 +17,107 @@ vi.mock('openai', () => {
   return { default: MockOpenAI, APIError };
 });
 
-import { callLLM } from '../../llm/client.js';
+import { callStructuredLLM } from '../../llm/client.js';
 
-describe('callLLM', () => {
+const TestSchema = z.object({
+  value: z.string(),
+});
+
+describe('callStructuredLLM', () => {
   const originalKey = process.env.OPENAI_API_KEY;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.OPENAI_API_KEY = 'test-key';
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
     process.env.OPENAI_API_KEY = originalKey;
+    consoleErrorSpy.mockRestore();
   });
 
   it('throws when OPENAI_API_KEY is missing', async () => {
     delete process.env.OPENAI_API_KEY;
-    await expect(callLLM('test')).rejects.toThrow('OPENAI_API_KEY is missing or empty');
+    await expect(callStructuredLLM('test', TestSchema, 'test_schema')).rejects.toThrow('OPENAI_API_KEY is missing or empty');
   });
 
   it('throws when OPENAI_API_KEY is empty string', async () => {
     process.env.OPENAI_API_KEY = '   ';
-    await expect(callLLM('test')).rejects.toThrow('OPENAI_API_KEY is missing or empty');
+    await expect(callStructuredLLM('test', TestSchema, 'test_schema')).rejects.toThrow('OPENAI_API_KEY is missing or empty');
   });
 
   it('throws when prompt is not a string', async () => {
     // @ts-expect-error intentional wrong type
-    await expect(callLLM(42)).rejects.toThrow('callLLM expects a string prompt');
+    await expect(callStructuredLLM(42, TestSchema, 'test_schema')).rejects.toThrow('callStructuredLLM expects a string prompt');
   });
 
-  it('returns trimmed response on success', async () => {
-    mockCreate.mockResolvedValueOnce({ output_text: '  hello world  ' });
-    const result = await callLLM('some prompt');
-    expect(result).toBe('hello world');
+  it('throws when schema name is empty', async () => {
+    await expect(callStructuredLLM('test', TestSchema, '   ')).rejects.toThrow('callStructuredLLM expects a non-empty schema name');
   });
 
-  it('throws when response content is null', async () => {
-    mockCreate.mockResolvedValueOnce({ output_text: null });
-    await expect(callLLM('prompt')).rejects.toThrow('OpenAI returned an empty response');
+  it('returns parsed response on success', async () => {
+    mockParse.mockResolvedValueOnce({
+      output_parsed: { value: 'hello world' },
+      output: [],
+    });
+    const result = await callStructuredLLM('some prompt', TestSchema, 'test_schema');
+    expect(result).toEqual({ parsed: { value: 'hello world' }, refusal: null });
+    expect(mockParse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'gpt-5.4',
+        input: 'some prompt',
+        text: expect.objectContaining({
+          format: expect.objectContaining({ type: 'json_schema' }),
+        }),
+      })
+    );
   });
 
-  it('throws when response content is empty string', async () => {
-    mockCreate.mockResolvedValueOnce({ output_text: '   ' });
-    await expect(callLLM('prompt')).rejects.toThrow('OpenAI returned an empty response');
+  it('returns refusal when the model refuses', async () => {
+    mockParse.mockResolvedValueOnce({
+      output_parsed: null,
+      output: [
+        {
+          type: 'message',
+          content: [{ type: 'refusal', refusal: 'I cannot help with that.' }],
+        },
+      ],
+    });
+    const result = await callStructuredLLM('prompt', TestSchema, 'test_schema');
+    expect(result).toEqual({ parsed: null, refusal: 'I cannot help with that.' });
+  });
+
+  it('returns parsed output_text content when output_parsed is null', async () => {
+    mockParse.mockResolvedValueOnce({
+      output_parsed: null,
+      output: [
+        {
+          type: 'message',
+          content: [{ type: 'output_text', text: '{"value":"fallback"}', parsed: { value: 'fallback' } }],
+        },
+      ],
+    });
+    const result = await callStructuredLLM('prompt', TestSchema, 'test_schema');
+    expect(result).toEqual({ parsed: { value: 'fallback' }, refusal: null });
+  });
+
+  it('throws when response has neither parsed content nor refusal', async () => {
+    mockParse.mockResolvedValueOnce({ output_parsed: null, output: [] });
+    await expect(callStructuredLLM('prompt', TestSchema, 'test_schema')).rejects.toThrow('OpenAI returned an empty structured response');
   });
 
   it('wraps APIError with status code', async () => {
     const { APIError } = await import('openai');
     const apiErr = new (APIError as new (s: number, m: string) => Error)(401, 'Unauthorized');
-    mockCreate.mockRejectedValueOnce(apiErr);
-    await expect(callLLM('prompt')).rejects.toThrow('OpenAI request failed (401)');
+    mockParse.mockRejectedValueOnce(apiErr);
+    await expect(callStructuredLLM('prompt', TestSchema, 'test_schema')).rejects.toThrow('OpenAI request failed (401)');
   });
 
   it('re-throws plain Error unchanged', async () => {
     const err = new Error('network timeout');
-    mockCreate.mockRejectedValueOnce(err);
-    await expect(callLLM('prompt')).rejects.toThrow('network timeout');
+    mockParse.mockRejectedValueOnce(err);
+    await expect(callStructuredLLM('prompt', TestSchema, 'test_schema')).rejects.toThrow('network timeout');
   });
 });
