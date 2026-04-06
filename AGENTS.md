@@ -48,7 +48,7 @@ Requires Node >= 18. API docs at `http://localhost:3000/docs` (Swagger UI).
 src/
 ├── app.ts                  # Express server, route registration, Swagger UI mount
 ├── llm/
-│   └── client.ts           # callLLM(prompt): wraps OpenAI SDK
+│   └── client.ts           # callStructuredLLM(prompt, schema, schemaName): structured OpenAI wrapper
 ├── services/
 │   ├── ingest.ts           # extractText(buffer): PDF → clean string
 │   ├── extract.ts          # extractEdital(text): text → ExtractionOutput
@@ -190,57 +190,78 @@ type ValidationOutput = {
 
 ## LLM Client
 
-`src/llm/client.ts` — single exported function:
+`src/llm/client.ts` exports a structured-output helper:
 
 ```typescript
-callLLM(prompt: string): Promise<string>
+type StructuredLLMResult<T> =
+  | { parsed: T; refusal: null }
+  | { parsed: null; refusal: string };
+
+callStructuredLLM<Schema extends ZodType>(
+  prompt: string,
+  schema: Schema,
+  schemaName: string
+): Promise<StructuredLLMResult<z.infer<Schema>>>
 ```
 
 | Setting       | Value         |
 |---------------|---------------|
-| Model         | `gpt-4.1`     |
+| SDK           | `openai@6.33.0` |
+| Model         | `gpt-5.4`     |
 | Temperature   | `0.3`         |
-| Max tokens    | `1000`        |
+| Max output tokens | `1000`    |
 | Env var       | `OPENAI_API_KEY` |
 
-The client throws a typed error on API failure (`OpenAI APIError` is re-wrapped with status code). Always returns a non-empty string or throws.
+Implementation details:
+
+- Uses `client.responses.parse(...)`
+- Uses `text.format: zodTextFormat(schema, schemaName)`
+- Returns parsed structured data when available
+- Returns a refusal string when the model explicitly refuses
+- Throws on API failure; `OpenAI APIError` is re-wrapped with status code
+
+The project is on `zod@4`, and the service schemas are passed directly into the SDK helper rather than duplicated as manual JSON examples in prompts.
 
 ---
 
 ## Prompt Engineering
 
-Each service builds its own prompt and calls `callLLM` directly. All prompts instruct the model to return **only valid JSON, no markdown fences**.
+Each service builds its own prompt and calls `callStructuredLLM(...)` with a Zod schema. Prompts describe the task and edge-case behavior, not output formatting.
 
 ### Stage 2 — Extract (`services/extract.ts`)
 
-Instruction: extract `prazo`, `criterios`, `formato`, `temas` from the raw edital text. Returns an empty-but-valid `ExtractionOutput` on parse failure.
+Instruction: extract `prazo`, `criterios`, `formato`, `temas` from the raw edital text. If information is unavailable, the prompt asks for empty strings or arrays in the corresponding fields. On refusal, the service returns an empty-but-valid `ExtractionOutput`.
 
 ### Stage 3 — Generate (`services/pipeline.ts`)
 
-Instruction: use the edital as primary reference; align the generated sections to its constraints and evaluation criteria. Produces the six standard sections (`Introdução`, `Justificativa`, `Objetivos`, `Metodologia`, `Cronograma`, `Orçamento`) and a compliance checklist in a single JSON object `{ projeto, checklist }`.
+Instruction: use the edital as primary reference; align the generated sections to its constraints and evaluation criteria. Produces the six standard sections (`Introdução`, `Justificativa`, `Objetivos`, `Metodologia`, `Cronograma`, `Orçamento`) and a compliance checklist in a single structured object `{ projeto, checklist }`. If the input is insufficient, the prompt asks for the best possible draft and conservative checklist entries. On refusal, the service returns `{ projeto: "", checklist: {} }`.
 
 ### Stage 4 — Validate (`services/validate.ts`)
 
-Instruction: cross-check `projeto` against `requisitos`; categorize findings into `ok` (met), `faltando` (missing), `sugestoes` (improvements).
+Instruction: cross-check `projeto` against `requisitos`; categorize findings into `ok` (met), `faltando` (missing), `sugestoes` (improvements). If something cannot be evaluated safely, the prompt asks the model to omit it rather than invent a conclusion. On refusal, the service returns empty arrays.
 
 ---
 
 ## Error Handling Pattern
 
-All three LLM-backed services share the same defensive parsing pattern:
+All three LLM-backed services share the same defensive fallback pattern:
 
 ```typescript
-function stripJsonFence(raw: string): string {
-  const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-  return match ? match[1].trim() : raw.trim();
+const result = await callStructuredLLM(prompt, Schema, "schema_name");
+
+if (result.parsed) {
+  return result.parsed;
 }
+
+return Schema.parse({});
 ```
 
-1. Strip optional markdown code fences from the LLM response.
-2. Attempt `JSON.parse`.
-3. On failure: return an empty-but-valid output object (never throw to the caller).
+1. Request structured output directly from the OpenAI SDK using the service's Zod schema.
+2. If parsed output is returned, use it as-is.
+3. If the model refuses, return an empty-but-valid output object for that service.
+4. API/client failures still throw from `src/llm/client.ts`.
 
-For `pipeline.ts`, if `projeto` is not a string, the raw trimmed response is used as fallback so the caller always gets readable text.
+There is no markdown-fence stripping or manual `JSON.parse` step in the current implementation.
 
 ---
 
