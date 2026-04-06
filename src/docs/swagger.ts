@@ -62,6 +62,88 @@ const options: swaggerJsdoc.Options = {
           },
         },
       },
+      "/validate": {
+        post: {
+          tags: ["Validação"],
+          summary: "Validação do projeto contra os requisitos do edital",
+          description: "Verifica se o projeto atende aos requisitos e retorna itens ok, faltando e sugestões.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ValidateRequest" },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Checklist de validação gerado",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ValidateResponse" },
+                },
+              },
+            },
+            "400": {
+              description: "Campos requisitos ou projeto ausentes",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorMessage" },
+                },
+              },
+            },
+            "500": {
+              description: "Falha ao validar (ex.: erro no LLM)",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorMessage" },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/extract": {
+        post: {
+          tags: ["Extração"],
+          summary: "Extração estruturada de informações do edital",
+          description: "Recebe o texto de um edital e retorna prazo, critérios, formato e temas extraídos via LLM.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ExtractRequest" },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Informações extraídas com sucesso",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ExtractResponse" },
+                },
+              },
+            },
+            "400": {
+              description: "Campo editalText ausente ou inválido",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorMessage" },
+                },
+              },
+            },
+            "500": {
+              description: "Falha ao extrair informações (ex.: erro no LLM)",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ErrorMessage" },
+                },
+              },
+            },
+          },
+        },
+      },
       "/pipeline": {
         post: {
           tags: ["Pipeline"],
@@ -107,6 +189,60 @@ const options: swaggerJsdoc.Options = {
     },
     components: {
       schemas: {
+        ValidateRequest: {
+          type: "object",
+          required: ["requisitos", "projeto"],
+          properties: {
+            requisitos: { type: "string", description: "Requisitos extraídos do edital" },
+            projeto: { type: "string", description: "Texto do projeto gerado" },
+          },
+        },
+        ValidateResponse: {
+          type: "object",
+          properties: {
+            ok: {
+              type: "array",
+              items: { type: "string" },
+              description: "Requisitos atendidos",
+            },
+            faltando: {
+              type: "array",
+              items: { type: "string" },
+              description: "Requisitos não atendidos",
+            },
+            sugestoes: {
+              type: "array",
+              items: { type: "string" },
+              description: "Sugestões de melhoria",
+            },
+          },
+          required: ["ok", "faltando", "sugestoes"],
+        },
+        ExtractRequest: {
+          type: "object",
+          required: ["editalText"],
+          properties: {
+            editalText: { type: "string", description: "Texto completo do edital" },
+          },
+        },
+        ExtractResponse: {
+          type: "object",
+          properties: {
+            prazo: { type: "string", description: "Prazo de submissão" },
+            criterios: {
+              type: "array",
+              items: { type: "string" },
+              description: "Critérios de avaliação",
+            },
+            formato: { type: "string", description: "Formato exigido de submissão" },
+            temas: {
+              type: "array",
+              items: { type: "string" },
+              description: "Temas ou áreas de interesse",
+            },
+          },
+          required: ["prazo", "criterios", "formato", "temas"],
+        },
         ErrorMessage: {
           type: "object",
           properties: {
