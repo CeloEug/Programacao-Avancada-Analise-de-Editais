@@ -1,5 +1,7 @@
 import "dotenv/config";
 import express from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger.js";
 import { extractRouter } from "./routes/extract.js";
@@ -9,8 +11,12 @@ import { validateRouter } from "./routes/validate.js";
 
 const app = express();
 const PORT = 3000;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicDir = path.resolve(__dirname, "../public");
 
 app.use(express.json());
+app.use(express.static(publicDir));
 app.use(uploadRouter);
 app.use(extractRouter);
 app.use(pipelineRouter);
