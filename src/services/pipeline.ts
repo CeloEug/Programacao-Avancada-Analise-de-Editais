@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { callLLM } from "../llm/client.js";
 
 export type PipelineInput = {
@@ -10,10 +11,12 @@ export type PipelineInput = {
   equipe: string;
 };
 
-export type PipelineOutput = {
-  projeto: string;
-  checklist: Record<string, unknown>;
-};
+const PipelineOutputSchema = z.object({
+  projeto:   z.string().catch(""),
+  checklist: z.record(z.string(), z.unknown()).catch({}),
+});
+
+export type PipelineOutput = z.infer<typeof PipelineOutputSchema>;
 
 function stripJsonFence(raw: string): string {
   const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -57,19 +60,11 @@ Return ONLY valid JSON (no markdown):
   const trimmed = stripJsonFence(raw);
 
   try {
-    const parsed = JSON.parse(trimmed) as {
-      projeto?: unknown;
-      checklist?: unknown;
+    const result = PipelineOutputSchema.parse(JSON.parse(trimmed));
+    return {
+      projeto: result.projeto || trimmed,
+      checklist: result.checklist,
     };
-    const projeto =
-      typeof parsed.projeto === "string" ? parsed.projeto : trimmed;
-    const checklist =
-      parsed.checklist !== null &&
-        typeof parsed.checklist === "object" &&
-        !Array.isArray(parsed.checklist)
-        ? (parsed.checklist as Record<string, unknown>)
-        : {};
-    return { projeto, checklist };
   } catch {
     return { projeto: raw, checklist: {} };
   }

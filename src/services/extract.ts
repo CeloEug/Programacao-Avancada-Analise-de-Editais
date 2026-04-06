@@ -1,11 +1,14 @@
+import { z } from "zod";
 import { callLLM } from "../llm/client.js";
 
-export type ExtractionOutput = {
-  prazo: string;
-  criterios: string[];
-  formato: string;
-  temas: string[];
-};
+const ExtractionOutputSchema = z.object({
+  prazo:     z.string().catch(""),
+  criterios: z.array(z.coerce.string()).catch([]),
+  formato:   z.string().catch(""),
+  temas:     z.array(z.coerce.string()).catch([]),
+});
+
+export type ExtractionOutput = z.infer<typeof ExtractionOutputSchema>;
 
 function stripJsonFence(raw: string): string {
   const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -30,14 +33,8 @@ ${editalText}`;
   const trimmed = stripJsonFence(raw);
 
   try {
-    const parsed = JSON.parse(trimmed) as Partial<ExtractionOutput>;
-    return {
-      prazo: typeof parsed.prazo === "string" ? parsed.prazo : "",
-      criterios: Array.isArray(parsed.criterios) ? parsed.criterios.map(String) : [],
-      formato: typeof parsed.formato === "string" ? parsed.formato : "",
-      temas: Array.isArray(parsed.temas) ? parsed.temas.map(String) : [],
-    };
+    return ExtractionOutputSchema.parse(JSON.parse(trimmed));
   } catch {
-    return { prazo: "", criterios: [], formato: "", temas: [] };
+    return ExtractionOutputSchema.parse({});
   }
 }

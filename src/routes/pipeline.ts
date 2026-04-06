@@ -1,34 +1,22 @@
 import { Router } from "express";
+import { z } from "zod";
 import { runPipeline } from "../services/pipeline.js";
-import type { PipelineInput } from "../services/pipeline.js";
 
 export const pipelineRouter = Router();
 
-const FIELDS: (keyof PipelineInput)[] = [
-  "editalText",
-  "titulo",
-  "descricao",
-  "objetivos",
-  "metodologia",
-  "orcamento",
-  "equipe",
-];
-
-function readBody(body: unknown): PipelineInput | null {
-  if (!body || typeof body !== "object") return null;
-  const o = body as Record<string, unknown>;
-  const out: Partial<PipelineInput> = {};
-  for (const key of FIELDS) {
-    const v = o[key];
-    if (typeof v !== "string" || !v.trim()) return null;
-    out[key] = v.trim();
-  }
-  return out as PipelineInput;
-}
+const PipelineBodySchema = z.object({
+  editalText:  z.string().trim().min(1),
+  titulo:      z.string().trim().min(1),
+  descricao:   z.string().trim().min(1),
+  objetivos:   z.string().trim().min(1),
+  metodologia: z.string().trim().min(1),
+  orcamento:   z.string().trim().min(1),
+  equipe:      z.string().trim().min(1),
+});
 
 pipelineRouter.post("/pipeline", async (req, res): Promise<void> => {
-  const input = readBody(req.body);
-  if (!input) {
+  const parsed = PipelineBodySchema.safeParse(req.body);
+  if (!parsed.success) {
     res.status(400).json({
       error:
         "Invalid body. Required JSON string fields: editalText, titulo, descricao, objetivos, metodologia, orcamento, equipe.",
@@ -37,7 +25,7 @@ pipelineRouter.post("/pipeline", async (req, res): Promise<void> => {
   }
 
   try {
-    const result = await runPipeline(input);
+    const result = await runPipeline(parsed.data);
     res.json(result);
   } catch (err) {
     console.error("Pipeline error:", err);

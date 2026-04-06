@@ -1,10 +1,13 @@
+import { z } from "zod";
 import { callLLM } from "../llm/client.js";
 
-export type ValidationOutput = {
-  ok: string[];
-  faltando: string[];
-  sugestoes: string[];
-};
+const ValidationOutputSchema = z.object({
+  ok:        z.array(z.coerce.string()).catch([]),
+  faltando:  z.array(z.coerce.string()).catch([]),
+  sugestoes: z.array(z.coerce.string()).catch([]),
+});
+
+export type ValidationOutput = z.infer<typeof ValidationOutputSchema>;
 
 function stripJsonFence(raw: string): string {
   const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -32,13 +35,8 @@ ${projeto}`;
   const trimmed = stripJsonFence(raw);
 
   try {
-    const parsed = JSON.parse(trimmed) as Partial<ValidationOutput>;
-    return {
-      ok: Array.isArray(parsed.ok) ? parsed.ok.map(String) : [],
-      faltando: Array.isArray(parsed.faltando) ? parsed.faltando.map(String) : [],
-      sugestoes: Array.isArray(parsed.sugestoes) ? parsed.sugestoes.map(String) : [],
-    };
+    return ValidationOutputSchema.parse(JSON.parse(trimmed));
   } catch {
-    return { ok: [], faltando: [], sugestoes: [] };
+    return ValidationOutputSchema.parse({});
   }
 }
