@@ -234,6 +234,49 @@
         font-size: 0.82rem;
       }
 
+      #feedback.is-info {
+        color: var(--text-soft);
+      }
+
+      #feedback.is-ok {
+        color: var(--ok);
+      }
+
+      .pdf-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .pdf-row input[type="file"] {
+        flex: 1 1 200px;
+        min-width: 0;
+        padding: 0.45rem 0.5rem;
+        font-size: 0.82rem;
+      }
+
+      .secondary-btn {
+        border: 1px solid #3a5080;
+        background: #121c32;
+        color: #d0dcfa;
+        border-radius: 10px;
+        padding: 0.6rem 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .secondary-btn:hover:not(:disabled) {
+        background: #182442;
+      }
+
+      .secondary-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
     </style>
   </head>
   <body>
@@ -294,8 +337,21 @@
 
             <div class="field" data-field="editalText">
               <label for="editalText">Texto do edital</label>
+              <div class="pdf-row">
+                <input
+                  id="pdf-file"
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  aria-label="Arquivo PDF do edital"
+                />
+                <button class="secondary-btn" id="pdf-extract-btn" type="button">
+                  Extrair texto do PDF
+                </button>
+              </div>
+              <span class="hint"
+                >Envie um PDF para preencher o campo automaticamente ou cole o texto do edital manualmente.</span
+              >
               <textarea id="editalText" name="editalText" placeholder="Cole aqui o texto extraído do edital."></textarea>
-              <span class="hint">Necessário para alinhar o rascunho ao edital. Se extraiu de um PDF, cole o texto completo aqui.</span>
               <span class="error" data-error-for="editalText"></span>
             </div>
 
