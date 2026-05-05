@@ -7,30 +7,49 @@
     <style>
       :root {
         color-scheme: dark only;
-        --bg: #070b14;
-        --surface: #0f1524;
-        --surface-2: #111b2f;
-        --line: #23304c;
-        --line-soft: #1e2638;
-        --text: #e9eefc;
-        --text-soft: #99a8c7;
-        --brand: #4c7dff;
-        --brand-2: #355fd1;
-        --ok: #35c886;
+        --bg: #0A1128;
+        --surface: rgba(26, 42, 74, 0.8);
+        --line: #2A3A5A;
+        --brand: #3B82F6;
+        --brand-glow: rgba(59, 130, 246, 0.3);
+        --accent: #FFB703;
+        --text: #ffffff;
+        --text-soft: #94a3b8;
         --error: #ff6f86;
-        --radius: 12px;
-        --shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
-        font-family: "Segoe UI", Inter, Roboto, Arial, sans-serif;
+        --ok: #35c886;
+        --radius-lg: 24px;
+        --radius-md: 12px;
+        font-family: "Inter", "Segoe UI", Roboto, sans-serif;
       }
 
       body {
         margin: 0;
         min-height: 100vh;
-        background:
-          radial-gradient(1000px 420px at 15% -25%, #183261 0%, transparent 72%),
-          radial-gradient(900px 380px at 92% -20%, #221f50 0%, transparent 70%),
-          var(--bg);
+        background-color: var(--bg);
+        background-image: 
+          radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 40%),
+          radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 40%);
         color: var(--text);
+        display: flex;
+        justify-content: center;
+        padding: 2rem 1rem;
+        line-height: 1.5;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: #1A2A4A;
+        z-index: 100;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
       }
 
       .container {
