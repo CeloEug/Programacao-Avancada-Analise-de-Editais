@@ -92,41 +92,35 @@
         margin-top: 0.5rem;
       }
 
-      .layout {
-        display: grid;
-        gap: 1rem;
-      }
-
       .panel {
-        background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+        background: var(--surface);
+        backdrop-filter: blur(12px);
         border: 1px solid var(--line);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
+        border-radius: var(--radius-lg);
+        padding: 2.5rem;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
       }
 
-      .form-panel {
-        padding: 1.2rem;
+      .panel:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 60px var(--brand-glow);
       }
 
       .panel-head {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-        padding-bottom: 0.85rem;
-        border-bottom: 1px solid var(--line-soft);
+        margin-bottom: 2rem;
       }
 
       .panel-title {
+        color: var(--brand);
+        font-size: 1.5rem;
         margin: 0;
-        font-size: 1.02rem;
       }
 
       .panel-subtitle {
-        margin: 0.2rem 0 0;
         color: var(--text-soft);
-        font-size: 0.82rem;
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
       }
 
       form {
@@ -315,10 +309,8 @@
       <section class="layout">
         <div class="panel form-panel">
           <div class="panel-head">
-            <div>
               <h2 class="panel-title">Formulário de proposta</h2>
               <p class="panel-subtitle">Campos obrigatórios para geração automática do rascunho.</p>
-            </div>
           </div>
 
           <form id="pipeline-form" novalidate>
