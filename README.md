@@ -69,8 +69,5 @@ Clique no botão **"Gerar proposta"**. O sistema processará as informações e 
 Para desenvolvedores que desejam integrar o sistema ou testar os endpoints diretamente, a documentação interativa (Swagger UI) está disponível em:
 `http://localhost:3000/docs`
 
-Os endpoints principais são:
--   `POST /upload`: Extração de texto de PDF.
--   `POST /extract`: Extração de requisitos estruturados de um texto de edital.
--   `POST /pipeline`: Geração completa do rascunho e checklist.
--   `POST /validate`: Validação de conformidade entre proposta e requisitos.
+O único endpoint usado é:
+-   `POST /generate`: Gera proposta completa a partir de um edital PDF.
