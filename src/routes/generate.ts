@@ -6,7 +6,13 @@ import { extractEdital } from "../services/extract.js";
 import { runPipeline } from "../services/pipeline.js";
 import { validateProject } from "../services/validate.js";
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+    fieldSize: 50 * 1024,
+  },
+});
 
 export const generateRouter = Router();
 
@@ -25,6 +31,11 @@ generateRouter.post(
   async (req, res): Promise<void> => {
     if (!req.file?.buffer) {
       res.status(400).json({ error: "Campo obrigatório ausente: file (PDF em multipart)." });
+      return;
+    }
+
+    if (req.file.mimetype !== "application/pdf") {
+      res.status(415).json({ error: "Apenas arquivos PDF são aceitos." });
       return;
     }
 
