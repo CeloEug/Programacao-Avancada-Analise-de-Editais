@@ -3,7 +3,7 @@ import OpenAI, { APIError } from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import type { infer as zInfer, ZodType } from "zod";
 
-const MODEL = "gpt-5.4";
+const MODEL = "gpt-5-nano-2025-08-07";
 const TEMPERATURE = 0.3;
 const MAX_OUTPUT_TOKENS = 1000;
 
