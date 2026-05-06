@@ -26,7 +26,7 @@
         margin: 0;
         min-height: 100vh;
         background-color: var(--bg);
-        background-image: 
+        background-image:
           radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 40%),
           radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 40%);
         color: var(--text);
@@ -203,39 +203,52 @@
       }
 
       .primary-btn {
-        border: 1px solid transparent;
-        background: linear-gradient(180deg, var(--brand) 0%, var(--brand-2) 100%);
-        color: #fff;
-        border-radius: 10px;
-        padding: 0.74rem 1.18rem;
+        background: linear-gradient(135deg, var(--brand), #2563EB);
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        padding: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 600;
         cursor: pointer;
-        transition: transform 0.12s ease, filter 0.18s ease;
+        transition: all 0.3s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.8rem;
+        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+        width: 100%;
       }
 
-      .primary-btn:hover:not(:disabled) {
-        transform: translateY(-1px);
-        filter: brightness(1.07);
+      .primary-btn:hover {
+        transform: scale(1.02);
+        box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4);
       }
 
-      .primary-btn:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
+      .primary-btn:active {
+          transform: scale(0.98);
+      }
+
+      .secondary-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--line);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: background 0.2s;
+      }
+
+      .secondary-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
       }
 
       #feedback {
-        margin-top: 0.45rem;
-        min-height: 1rem;
+        text-align: center;
+        font-weight: 500;
         color: var(--error);
-        font-size: 0.82rem;
-      }
-
-      #feedback.is-info {
-        color: var(--text-soft);
-      }
-
-      #feedback.is-ok {
-        color: var(--ok);
+        margin-top: 1rem;
       }
 
       .pdf-row {
@@ -350,9 +363,9 @@
             </div>
 
             <div class="actions">
-              <div class="action-left">
-                <button class="primary-btn" id="submit-btn" type="submit">Gerar proposta</button>
-              </div>
+                <button class="primary-btn" id="submit-btn" type="submit">
+                    ✨ Gerar proposta
+                </button>
             </div>
             <div id="feedback" aria-live="polite"></div>
           </form>
