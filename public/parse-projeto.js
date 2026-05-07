@@ -14,31 +14,27 @@ const SECTION_TITLES = [
 export function parseProjetoSections(texto) {
   if (!texto || typeof texto !== 'string') return [];
 
-  const result = [];
+  // Match titles only at the start of a line (with optional ## prefix)
+  const titlePattern = (title) =>
+    new RegExp(`(?:^|\\n)(?:#{1,3}\\s*)?${title}\\s*\\n`, 'i');
 
-  for (let i = 0; i < SECTION_TITLES.length; i++) {
-    const title = SECTION_TITLES[i];
-    const titleIndex = texto.indexOf(title);
-    if (titleIndex === -1) continue;
-
-    const contentStart = titleIndex + title.length;
-
-    // Find where the next known section starts
-    let contentEnd = texto.length;
-    for (let j = 0; j < SECTION_TITLES.length; j++) {
-      if (j === i) continue;
-      const nextIndex = texto.indexOf(SECTION_TITLES[j], contentStart);
-      if (nextIndex !== -1 && nextIndex < contentEnd) {
-        contentEnd = nextIndex;
-      }
-    }
-
-    const conteudo = texto.slice(contentStart, contentEnd).trim();
-    result.push({ titulo: title, conteudo });
+  // Find the position of each title in the text (matchStart = before title line, start = after title line)
+  const positions = [];
+  for (const title of SECTION_TITLES) {
+    const match = titlePattern(title).exec(texto);
+    if (!match) continue;
+    positions.push({ titulo: title, matchStart: match.index, start: match.index + match[0].length });
   }
 
-  // Sort by order of appearance in the text
-  result.sort((a, b) => texto.indexOf(a.titulo) - texto.indexOf(b.titulo));
+  // Sort by order of appearance
+  positions.sort((a, b) => a.matchStart - b.matchStart);
+
+  // Extract content between consecutive titles
+  const result = positions.map(({ titulo, start }, i) => {
+    const end = i + 1 < positions.length ? positions[i + 1].matchStart : texto.length;
+    const conteudo = texto.slice(start, end).trim();
+    return { titulo, conteudo };
+  });
 
   return result;
 }
