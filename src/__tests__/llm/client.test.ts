@@ -61,7 +61,7 @@ describe('callStructuredLLM', () => {
     expect(result).toEqual({ parsed: { value: 'hello world' }, refusal: null });
     expect(mockParse).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'gpt-5.4',
+        model: 'gpt-5-nano-2025-08-07',
         instructions: 'system instructions',
         input: 'user content',
         text: expect.objectContaining({

@@ -281,3 +281,187 @@
         opacity: 0.55;
         cursor: not-allowed;
       }
+
+      /* ── Resultado ─────────────────────────────────────── */
+
+      .resultado-section {
+        margin-top: 2rem;
+        background: var(--surface);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 2.5rem;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      }
+
+      .resultado-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .resultado-header h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 800;
+        background: linear-gradient(to right, #fff, var(--text-soft));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .resultado-bloco {
+        margin-bottom: 2rem;
+      }
+
+      .bloco-titulo {
+        color: var(--brand);
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 0.75rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* Accordions */
+
+      .accordion-item {
+        border-bottom: 1px solid var(--line);
+        overflow: hidden;
+      }
+
+      .accordion-item:last-child {
+        border-bottom: none;
+      }
+
+      .accordion-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 0.25rem;
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--text);
+        user-select: none;
+        gap: 0.5rem;
+      }
+
+      .accordion-header:hover {
+        color: var(--brand);
+      }
+
+      .accordion-icon {
+        font-size: 0.75rem;
+        transition: transform 0.25s ease;
+        flex-shrink: 0;
+      }
+
+      .accordion-item.open .accordion-icon {
+        transform: rotate(90deg);
+      }
+
+      .accordion-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        color: var(--text-soft);
+        line-height: 1.7;
+        white-space: pre-wrap;
+        padding: 0 0.25rem;
+      }
+
+      .accordion-item.open .accordion-body {
+        max-height: 600px;
+        padding-bottom: 1rem;
+      }
+
+      /* Validation blocks */
+
+      .validation-block {
+        padding: 0.85rem 1rem;
+        border-left: 3px solid var(--line);
+        border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        margin-bottom: 0.75rem;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .validation-block.ok   { border-left-color: var(--ok); }
+      .validation-block.faltando { border-left-color: var(--error); }
+      .validation-block.sugestoes { border-left-color: var(--accent); }
+
+      .validation-block h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .validation-block.ok h4       { color: var(--ok); }
+      .validation-block.faltando h4 { color: var(--error); }
+      .validation-block.sugestoes h4 { color: var(--accent); }
+
+      .validation-block ul {
+        margin: 0;
+        padding-left: 1.25rem;
+        color: var(--text-soft);
+        font-size: 0.9rem;
+        line-height: 1.6;
+      }
+
+      /* Checklist table */
+
+      .checklist-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      .checklist-table th {
+        text-align: left;
+        color: var(--text-soft);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .checklist-table td {
+        padding: 0.6rem 0.75rem;
+        color: var(--text-soft);
+        border-bottom: 1px solid rgba(42, 58, 90, 0.4);
+        vertical-align: top;
+      }
+
+      .checklist-table tr:nth-child(even) td {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      /* Requisitos block */
+
+      .requisitos-grid {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .requisito-item {
+        font-size: 0.9rem;
+        color: var(--text-soft);
+      }
+
+      .requisito-item strong {
+        color: var(--text);
+        display: block;
+        margin-bottom: 0.2rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+
+      .requisito-item ul {
+        margin: 0.2rem 0 0 1rem;
+        padding: 0;
+      }

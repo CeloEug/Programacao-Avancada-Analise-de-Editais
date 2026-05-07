@@ -82,6 +82,33 @@
           </form>
         </div>
       </section>
+
+    <section id="resultado" class="resultado-section" style="display:none;" aria-live="polite">
+      <div class="resultado-header">
+        <h2>Proposta Gerada</h2>
+        <button class="secondary-btn" id="reset-btn" type="button">← Gerar nova proposta</button>
+      </div>
+
+      <div class="resultado-bloco">
+        <h3 class="bloco-titulo">Projeto</h3>
+        <div id="projeto-accordions"></div>
+      </div>
+
+      <div class="resultado-bloco">
+        <h3 class="bloco-titulo">Validação</h3>
+        <div id="validacao-blocos"></div>
+      </div>
+
+      <div class="resultado-bloco">
+        <h3 class="bloco-titulo">Checklist</h3>
+        <div id="checklist-container"></div>
+      </div>
+
+      <div class="resultado-bloco">
+        <h3 class="bloco-titulo">Requisitos Extraídos</h3>
+        <div id="requisitos-bloco"></div>
+      </div>
+    </section>
     </main>
 
     <script type="module" src="./app.js"></script>

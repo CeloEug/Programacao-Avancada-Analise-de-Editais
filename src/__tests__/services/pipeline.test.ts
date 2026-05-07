@@ -34,7 +34,7 @@ describe('runPipeline', () => {
       refusal: 'refused',
     });
     const result = await runPipeline(baseInput);
-    expect(result).toEqual({ projeto: '', checklist: {} });
+    expect(result).toEqual({ projeto: '', checklist: [] });
   });
 
   it('passes the pipeline schema name to the LLM client', async () => {

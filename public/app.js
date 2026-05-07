@@ -1,3 +1,5 @@
+import { parseProjetoSections } from './parse-projeto.js';
+
 const REQUIRED_FIELDS = [
   "titulo",
   "descricao",
@@ -165,14 +167,171 @@ async function handleSubmit(event) {
       return;
     }
 
+    renderResultado(data);
     setFeedback("Proposta gerada com sucesso!", "ok");
-    console.log("Resultado:", data);
   } catch {
     setFeedback("Falha de conexão com o servidor. Tente novamente em instantes.", "error");
   } finally {
     submitBtn.disabled = false;
   }
 }
+
+const resultadoSection  = document.getElementById('resultado');
+const projetoAccordions = document.getElementById('projeto-accordions');
+const validacaoBlocos   = document.getElementById('validacao-blocos');
+const checklistContainer = document.getElementById('checklist-container');
+const requisitosBloco   = document.getElementById('requisitos-bloco');
+const resetBtn          = document.getElementById('reset-btn');
+
+function buildAccordions(projeto) {
+  const sections = parseProjetoSections(projeto);
+  projetoAccordions.innerHTML = '';
+
+  sections.forEach(({ titulo, conteudo }, index) => {
+    const item = document.createElement('div');
+    item.className = 'accordion-item' + (index === 0 ? ' open' : '');
+
+    const header = document.createElement('div');
+    header.className = 'accordion-header';
+    header.innerHTML = `<span>${titulo}</span><span class="accordion-icon">▶</span>`;
+    header.addEventListener('click', () => item.classList.toggle('open'));
+
+    const body = document.createElement('div');
+    body.className = 'accordion-body';
+    body.textContent = conteudo || '(sem conteúdo)';
+
+    item.append(header, body);
+    projetoAccordions.appendChild(item);
+  });
+}
+
+function buildValidacao(validacao) {
+  const configs = [
+    { key: 'ok',        label: '✅ Atendidos',  cls: 'ok' },
+    { key: 'faltando',  label: '❌ Faltando',   cls: 'faltando' },
+    { key: 'sugestoes', label: '💡 Sugestões',  cls: 'sugestoes' },
+  ];
+
+  validacaoBlocos.innerHTML = '';
+
+  for (const { key, label, cls } of configs) {
+    const items = validacao[key] ?? [];
+    const block = document.createElement('div');
+    block.className = `validation-block ${cls}`;
+
+    const title = document.createElement('h4');
+    title.textContent = label;
+
+    const list = document.createElement('ul');
+    if (items.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = '—';
+      list.appendChild(li);
+    } else {
+      items.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        list.appendChild(li);
+      });
+    }
+
+    block.append(title, list);
+    validacaoBlocos.appendChild(block);
+  }
+}
+
+function buildChecklist(checklist) {
+  checklistContainer.innerHTML = '';
+  const entries = Object.entries(checklist ?? {});
+
+  if (entries.length === 0) {
+    checklistContainer.textContent = '—';
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'checklist-table';
+
+  const thead = document.createElement('thead');
+  thead.innerHTML = '<tr><th>Requisito</th><th>Status</th></tr>';
+
+  const tbody = document.createElement('tbody');
+  entries.forEach(([req, status]) => {
+    const tr = document.createElement('tr');
+    const tdReq = document.createElement('td');
+    tdReq.textContent = req;
+    const tdStatus = document.createElement('td');
+    tdStatus.textContent = String(status);
+    tr.append(tdReq, tdStatus);
+    tbody.appendChild(tr);
+  });
+
+  table.append(thead, tbody);
+  checklistContainer.appendChild(table);
+}
+
+function buildRequisitos(requisitos) {
+  requisitosBloco.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'requisitos-grid';
+
+  const fields = [
+    { label: 'Prazo', value: requisitos.prazo },
+    { label: 'Formato', value: requisitos.formato },
+    { label: 'Critérios', value: requisitos.criterios },
+    { label: 'Temas', value: requisitos.temas },
+  ];
+
+  for (const { label, value } of fields) {
+    const item = document.createElement('div');
+    item.className = 'requisito-item';
+
+    const strong = document.createElement('strong');
+    strong.textContent = label;
+    item.appendChild(strong);
+
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        item.append('—');
+      } else {
+        const ul = document.createElement('ul');
+        value.forEach((v) => {
+          const li = document.createElement('li');
+          li.textContent = v;
+          ul.appendChild(li);
+        });
+        item.appendChild(ul);
+      }
+    } else {
+      item.append(value || '—');
+    }
+
+    grid.appendChild(item);
+  }
+
+  requisitosBloco.appendChild(grid);
+}
+
+function renderResultado(data) {
+  buildAccordions(data.projeto ?? '');
+  buildValidacao(data.validacao ?? {});
+  buildChecklist(data.checklist ?? {});
+  buildRequisitos(data.requisitos ?? {});
+
+  resultadoSection.style.display = 'block';
+  resultadoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetResultado() {
+  resultadoSection.style.display = 'none';
+  projetoAccordions.innerHTML  = '';
+  validacaoBlocos.innerHTML    = '';
+  checklistContainer.innerHTML = '';
+  requisitosBloco.innerHTML    = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+resetBtn.addEventListener('click', resetResultado);
 
 wireRealtimeFeedback();
 form.addEventListener("submit", handleSubmit);
