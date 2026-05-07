@@ -16,7 +16,7 @@ O sistema opera em quatro etapas principais:
 ## Como Construir (Para Desenvolvedores)
 
 ### Pré-requisitos
--   Node.js >= 18
+-   Node.js >= 22
 -   Uma chave de API da OpenAI (`OPENAI_API_KEY`)
 
 ### Instalação e Configuração
