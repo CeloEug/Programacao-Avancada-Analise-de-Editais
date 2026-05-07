@@ -5,25 +5,21 @@ const REQUIRED_FIELDS = [
   "metodologia",
   "orcamento",
   "equipe",
-  "editalText",
 ];
 
-/** Nomes amigáveis (o backend usa chaves em inglês, ex.: editalText). */
 const FIELD_LABELS = {
-  titulo: "Título",
-  descricao: "Descrição",
-  objetivos: "Objetivos",
+  titulo:      "Título",
+  descricao:   "Descrição",
+  objetivos:   "Objetivos",
   metodologia: "Metodologia",
-  orcamento: "Orçamento",
-  equipe: "Equipe",
-  editalText: "Texto do edital",
+  orcamento:   "Orçamento",
+  equipe:      "Equipe",
 };
 
-const form = document.getElementById("pipeline-form");
-const feedbackEl = document.getElementById("feedback");
-const submitBtn = document.getElementById("submit-btn");
+const form        = document.getElementById("pipeline-form");
+const feedbackEl  = document.getElementById("feedback");
+const submitBtn   = document.getElementById("submit-btn");
 const pdfFileInput = document.getElementById("pdf-file");
-const pdfExtractBtn = document.getElementById("pdf-extract-btn");
 
 function getFieldContainer(name) {
   return document.querySelector(`[data-field="${name}"]`);
@@ -81,13 +77,12 @@ function validate(payload) {
 
 function buildPayload() {
   return {
-    titulo: getFieldValue("titulo"),
-    descricao: getFieldValue("descricao"),
-    objetivos: getFieldValue("objetivos"),
+    titulo:      getFieldValue("titulo"),
+    descricao:   getFieldValue("descricao"),
+    objetivos:   getFieldValue("objetivos"),
     metodologia: getFieldValue("metodologia"),
-    orcamento: getFieldValue("orcamento"),
-    equipe: getFieldValue("equipe"),
-    editalText: getFieldValue("editalText"),
+    orcamento:   getFieldValue("orcamento"),
+    equipe:      getFieldValue("equipe"),
   };
 }
 
@@ -125,7 +120,7 @@ async function handleSubmit(event) {
   clearFeedback();
 
   const payload = buildPayload();
-  const errors = validate(payload);
+  const errors  = validate(payload);
 
   if (Object.keys(errors).length > 0) {
     for (const [field, message] of Object.entries(errors)) {
@@ -139,16 +134,25 @@ async function handleSubmit(event) {
     return;
   }
 
+  const file = pdfFileInput?.files?.[0];
+  if (!file) {
+    setFeedback("Selecione um arquivo PDF do edital.", "error");
+    return;
+  }
+
   submitBtn.disabled = true;
   setFeedback("Processando...", "info");
 
+  const formData = new FormData();
+  formData.append("file", file);
+  for (const [key, value] of Object.entries(payload)) {
+    formData.append(key, value);
+  }
+
   try {
-    const response = await fetch("/pipeline", {
+    const response = await fetch("/generate", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+      body: formData,
     });
 
     const data = await response.json();
@@ -161,58 +165,14 @@ async function handleSubmit(event) {
       return;
     }
 
-    clearFeedback();
-  } catch (error) {
+    setFeedback("Proposta gerada com sucesso!", "ok");
+    console.log("Resultado:", data);
+  } catch {
     setFeedback("Falha de conexão com o servidor. Tente novamente em instantes.", "error");
   } finally {
     submitBtn.disabled = false;
   }
 }
 
-async function handlePdfExtract() {
-  const file = pdfFileInput?.files?.[0];
-  if (!file) {
-    setFeedback("Selecione um arquivo PDF do edital.", "error");
-    return;
-  }
-
-  pdfExtractBtn.disabled = true;
-  setFeedback("Extraindo texto do PDF...", "info");
-
-  const body = new FormData();
-  body.append("file", file);
-
-  try {
-    const response = await fetch("/upload", {
-      method: "POST",
-      body,
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || typeof data.text !== "string") {
-      setFeedback(
-        "Não foi possível ler este PDF. Tente outro arquivo ou cole o texto manualmente.",
-        "error"
-      );
-      return;
-    }
-
-    const editalInput = form.elements.namedItem("editalText");
-    if (editalInput && typeof editalInput.value === "string") {
-      editalInput.value = data.text;
-      editalInput.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-
-    setFieldError("editalText", "");
-    setFeedback("Texto do PDF carregado no campo abaixo. Revise antes de gerar a proposta.", "ok");
-  } catch {
-    setFeedback("Falha de conexão ao enviar o PDF. Tente novamente.", "error");
-  } finally {
-    pdfExtractBtn.disabled = false;
-  }
-}
-
 wireRealtimeFeedback();
 form.addEventListener("submit", handleSubmit);
-pdfExtractBtn?.addEventListener("click", handlePdfExtract);

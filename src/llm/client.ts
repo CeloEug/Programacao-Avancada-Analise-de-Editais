@@ -4,8 +4,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import type { infer as zInfer, ZodType } from "zod";
 
 const MODEL = "gpt-5-nano-2025-08-07";
-const TEMPERATURE = 0.3;
-const MAX_OUTPUT_TOKENS = 1000;
+const MAX_OUTPUT_TOKENS = 10000;
 
 function getClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -63,7 +62,6 @@ export async function callStructuredLLM<Schema extends ZodType>(
       model: MODEL,
       instructions: systemPrompt,
       input: userContent,
-      temperature: TEMPERATURE,
       max_output_tokens: MAX_OUTPUT_TOKENS,
       text: {
         format: zodTextFormat(schema, schemaName),

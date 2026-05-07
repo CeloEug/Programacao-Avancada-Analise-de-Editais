@@ -11,9 +11,14 @@ export type PipelineInput = {
   equipe: string;
 };
 
+const ChecklistItemSchema = z.object({
+  requisito: z.string(),
+  status:    z.string(),
+});
+
 const PipelineOutputSchema = z.object({
   projeto:   z.string().catch(""),
-  checklist: z.record(z.string(), z.unknown()).catch({}),
+  checklist: z.array(ChecklistItemSchema).catch([]),
 });
 
 export type PipelineOutput = z.infer<typeof PipelineOutputSchema>;
@@ -46,7 +51,7 @@ Prazo: 30/06/2025. Máximo 10 páginas. Critérios: inovação, impacto social.
 </project_data>
 
 <assistant_response id="example-1">
-{"projeto":"## Introdução\nO Sistema de Triagem Inteligente propõe...\n\n## Justificativa\n...\n\n## Objetivos\n...\n\n## Metodologia\n...\n\n## Cronograma\n...\n\n## Orçamento\n...","checklist":{"máximo 10 páginas":"a verificar na versão final","inovação":"contemplado — uso de IA para triagem","impacto social":"contemplado — redução de tempo de espera em UPAs"}}
+{"projeto":"## Introdução\nO Sistema de Triagem Inteligente propõe...\n\n## Justificativa\n...\n\n## Objetivos\n...\n\n## Metodologia\n...\n\n## Cronograma\n...\n\n## Orçamento\n...","checklist":[{"requisito":"máximo 10 páginas","status":"a verificar na versão final"},{"requisito":"inovação","status":"contemplado — uso de IA para triagem"},{"requisito":"impacto social","status":"contemplado — redução de tempo de espera em UPAs"}]}
 </assistant_response>`;
 
   const userContent = `<edital>
