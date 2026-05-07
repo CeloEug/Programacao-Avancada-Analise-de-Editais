@@ -242,9 +242,9 @@ function buildValidacao(validacao) {
 
 function buildChecklist(checklist) {
   checklistContainer.innerHTML = '';
-  const entries = Object.entries(checklist ?? {});
+  const items = Array.isArray(checklist) ? checklist : [];
 
-  if (entries.length === 0) {
+  if (items.length === 0) {
     checklistContainer.textContent = '—';
     return;
   }
@@ -256,10 +256,10 @@ function buildChecklist(checklist) {
   thead.innerHTML = '<tr><th>Requisito</th><th>Status</th></tr>';
 
   const tbody = document.createElement('tbody');
-  entries.forEach(([req, status]) => {
+  items.forEach(({ requisito, status }) => {
     const tr = document.createElement('tr');
     const tdReq = document.createElement('td');
-    tdReq.textContent = req;
+    tdReq.textContent = requisito;
     const tdStatus = document.createElement('td');
     tdStatus.textContent = String(status);
     tr.append(tdReq, tdStatus);
@@ -283,6 +283,9 @@ function buildRequisitos(requisitos) {
   ];
 
   for (const { label, value } of fields) {
+    const isEmpty = Array.isArray(value) ? value.length === 0 : !value;
+    if (isEmpty) continue;
+
     const item = document.createElement('div');
     item.className = 'requisito-item';
 
@@ -291,19 +294,15 @@ function buildRequisitos(requisitos) {
     item.appendChild(strong);
 
     if (Array.isArray(value)) {
-      if (value.length === 0) {
-        item.append('—');
-      } else {
-        const ul = document.createElement('ul');
-        value.forEach((v) => {
-          const li = document.createElement('li');
-          li.textContent = v;
-          ul.appendChild(li);
-        });
-        item.appendChild(ul);
-      }
+      const ul = document.createElement('ul');
+      value.forEach((v) => {
+        const li = document.createElement('li');
+        li.textContent = v;
+        ul.appendChild(li);
+      });
+      item.appendChild(ul);
     } else {
-      item.append(value || '—');
+      item.append(value);
     }
 
     grid.appendChild(item);
