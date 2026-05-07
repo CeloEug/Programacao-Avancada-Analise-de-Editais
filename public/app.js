@@ -215,7 +215,7 @@ function buildValidacao(validacao) {
   validacaoBlocos.innerHTML = '';
 
   for (const { key, label, cls } of configs) {
-    const items = validacao[key] ?? [];
+    const items = (validacao[key] ?? []).filter(s => s && s.trim());
     if (items.length === 0) continue;
     const block = document.createElement('div');
     block.className = `validation-block ${cls}`;

@@ -52,7 +52,12 @@ ${projeto}
   );
 
   if (result.parsed) {
-    return result.parsed;
+    const filter = (arr: string[]) => arr.filter(s => s.trim());
+    return {
+      ok:        filter(result.parsed.ok),
+      faltando:  filter(result.parsed.faltando),
+      sugestoes: filter(result.parsed.sugestoes),
+    };
   }
 
   return ValidationOutputSchema.parse({});
